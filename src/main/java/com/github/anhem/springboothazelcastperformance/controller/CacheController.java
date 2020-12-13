@@ -27,6 +27,11 @@ public class CacheController {
         return cacheService.getCache(cacheName);
     }
 
+    @GetMapping("{cacheName}/get-cache-by-keys")
+    public Map<Object, Object> getCacheByKeys(@PathVariable CacheName cacheName) {
+        return cacheService.getCacheByKeys(cacheName);
+    }
+
     @GetMapping("{cacheName}/fill-cache")
     public MessageDto fillCache(@PathVariable CacheName cacheName) {
         cacheService.fillCache(cacheName);

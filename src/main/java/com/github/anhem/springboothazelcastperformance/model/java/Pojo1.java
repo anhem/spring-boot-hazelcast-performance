@@ -8,7 +8,7 @@ public class Pojo1 implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final Id id;
+    private Id id;
     private final String string;
     private final int anInt;
     private final List<Long> longList;
@@ -46,5 +46,9 @@ public class Pojo1 implements Serializable {
 
     public Map<Id, Pojo2> getIdToPojo2Map() {
         return idToPojo2Map;
+    }
+
+    public void setId(Id id) {
+        this.id = id;
     }
 }

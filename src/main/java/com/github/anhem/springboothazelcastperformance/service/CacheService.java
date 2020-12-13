@@ -10,11 +10,13 @@ import com.github.anhem.testpopulator.config.BuilderPattern;
 import com.github.anhem.testpopulator.config.PopulateConfig;
 import com.github.anhem.testpopulator.config.Strategy;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -39,6 +41,17 @@ public class CacheService {
         return cacheData;
     }
 
+    public Map<Object, Object> getCacheByKeys(CacheName cacheName) {
+        Map<Object, Object> map = hazelcastInstance.getMap(cacheName.name());
+        long t0 = System.currentTimeMillis();
+        Set<Object> keys = map.keySet().stream().collect(Collectors.toSet());
+        long t1 = System.currentTimeMillis();
+        IMap<Object, Object> cacheData = hazelcastInstance.getMap(cacheName.name());
+        long t2 = System.currentTimeMillis();
+        log.info("Got {} elements from {} in {}ms (got keys in {} and data by keys in {})", cacheData.size(), cacheName, t2 - t0, t1 - t0, t2 - t1);
+        return cacheData.getAll(keys);
+    }
+
     public void fillCache(CacheName cacheName) {
         switch (cacheName) {
             case JAVA_CACHE:
@@ -57,7 +70,11 @@ public class CacheService {
 
     private void fillJavaCache() {
         PopulateFactory populateFactory = new PopulateFactory();
-        Map<Id, Pojo1> data = IntStream.range(0, 10000).mapToObj(i -> populateFactory.populate(Pojo1.class))
+        Map<Id, Pojo1> data = IntStream.range(0, 100000).mapToObj(i -> {
+            Pojo1 pojo11 = populateFactory.populate(Pojo1.class);
+            pojo11.setId(new Id(i));
+            return pojo11;
+        })
                 .collect(Collectors.toMap(Pojo1::getId, pojo1 -> pojo1, (t1, t2) -> t1));
         addToCache(data, JAVA_CACHE);
     }
@@ -68,7 +85,7 @@ public class CacheService {
                 .builderPattern(BuilderPattern.LOMBOK)
                 .build();
         PopulateFactory populateFactory = new PopulateFactory(populateConfig);
-        Map<LombokId, Lombok1> data = IntStream.range(0, 10000).mapToObj(i -> populateFactory.populate(Lombok1.class))
+        Map<LombokId, Lombok1> data = IntStream.range(0, 100000).mapToObj(i -> populateFactory.populate(Lombok1.class).toBuilder().lombokId(new LombokId(i)).build())
                 .collect(Collectors.toMap(Lombok1::getLombokId, lombok1 -> lombok1, (t1, t2) -> t1));
         addToCache(data, LOMBOK_CACHE);
     }
