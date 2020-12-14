@@ -10,7 +10,6 @@ import com.github.anhem.testpopulator.config.BuilderPattern;
 import com.github.anhem.testpopulator.config.PopulateConfig;
 import com.github.anhem.testpopulator.config.Strategy;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -44,12 +43,12 @@ public class CacheService {
     public Map<Object, Object> getCacheByKeys(CacheName cacheName) {
         Map<Object, Object> map = hazelcastInstance.getMap(cacheName.name());
         long t0 = System.currentTimeMillis();
-        Set<Object> keys = map.keySet().stream().collect(Collectors.toSet());
+        Set<Object> keys = map.keySet();
         long t1 = System.currentTimeMillis();
-        IMap<Object, Object> cacheData = hazelcastInstance.getMap(cacheName.name());
+        Map<Object, Object> cacheData = hazelcastInstance.getMap(cacheName.name()).getAll(keys);
         long t2 = System.currentTimeMillis();
         log.info("Got {} elements from {} in {}ms (got keys in {} and data by keys in {})", cacheData.size(), cacheName, t2 - t0, t1 - t0, t2 - t1);
-        return cacheData.getAll(keys);
+        return cacheData;
     }
 
     public void fillCache(CacheName cacheName) {
